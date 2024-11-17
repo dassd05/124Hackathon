@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Generator</title>
+    <link href="/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-4xl font-semibold text-center text-indigo-600 mb-8">Flashcards Generator</h1>
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <form id="flashcards-form">
+                <div class="mb-4">
+                    <label for="notes" class="block text-lg font-medium text-gray-700">Enter your notes:</label>
+                    <textarea id="notes" rows="6" class="mt-2 w-full p-3 border border-gray-300 rounded-md" placeholder="Type your notes here"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg text-lg">Generate Flashcards</button>
+            </form>
+            <div id="flashcards-container" class="mt-6 hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Generated Flashcards</h2>
+                <div id="flashcards-list" class="space-y-4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('flashcards-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const notes = document.getElementById('notes').value;
+
+            document.getElementById('flashcards-list').innerHTML = '';
+            document.getElementById('flashcards-container').classList.add('hidden');
+
+            const flashcardsList = document.getElementById('flashcards-list');
+            flashcardsList.innerHTML = '<div class="text-center text-gray-600">Generating flashcards...</div>';
+
+            try {
+                const response = await fetch('http://localhost:3000/generate-flashcards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ notes }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error generating flashcards');
+                }
+
+                const flashcards = await response.json();
+                if (flashcards.length === 0) {
+                    flashcardsList.innerHTML = '<div class="text-center text-gray-600">No flashcards generated.</div>';
+                } else {
+                    flashcards.forEach((card) => {
+                        const cardElement = document.createElement('div');
+                        cardElement.classList.add('bg-gray-100', 'p-4', 'rounded-md', 'shadow-sm');
+                        cardElement.innerHTML = `
+                            <p class="font-semibold text-lg text-gray-800">Question: ${card.question}</p>
+                            <p class="mt-2 text-gray-600">Answer: ${card.answer}</p>
+                        `;
+                        flashcardsList.appendChild(cardElement);
+                    });
+                }
+
+                document.getElementById('flashcards-container').classList.remove('hidden');
+            } catch (error) {
+                flashcardsList.innerHTML = '<div class="text-center text-red-600">Failed to generate flashcards.</div>';
+            }
+        });
+    </script>
+</body>
+</html>
